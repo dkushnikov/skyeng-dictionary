@@ -58,14 +58,37 @@ class TestSuite
         $direction = (bool)rand(0, 1);
 
         if ($direction) {
-            shuffle($this->results);
-            $case = new TestCase(key($word), current($word), array_slice($this->results, 0, self::CASE_VARIANTS_NUM));
+
+            $question = key($word);
+            $answer   = current($word);
+
+            $variants = $this->getVariants($this->results, $answer);
         } else {
-            shuffle($this->sources);
-            $case = new TestCase(current($word), key($word), array_slice($this->sources, 0, self::CASE_VARIANTS_NUM));
+
+            $question = current($word);
+            $answer   = key($word);
+
+            $variants = $this->getVariants($this->sources, $answer);
         }
 
-        $this->currentCase = $case;
+        $this->currentCase = new TestCase($question, $answer, $variants);
+    }
+
+    private static function getVariants($words, $answer)
+    {
+        shuffle($words);
+
+        $variants = array_slice(array_filter(
+            $words,
+            function ($word) use ($answer) {
+                return $word != $answer;
+            }
+        ),
+            0,
+            self::CASE_VARIANTS_NUM
+        );
+
+        return $variants;
     }
 
     public function hasMoreCases()
