@@ -7,7 +7,7 @@ return [
     'dictionary' => Json::decode('
         {
             "apple": "яблоко",
-            "pear": "персик",
+            "peach": "персик",
             "orange": "апельсин",
             "grape": "виноград",
             "lemon": "лимон",
@@ -21,7 +21,8 @@ return [
             "melon": "дыня",
             "apricot": "абрикос",
             "mango": "манго",
-            "pear": "слива",
+            "plum": "слива",
+            "pear": "груша",
             "pomegranate": "гранат",
             "cherry": "вишня"
         }
