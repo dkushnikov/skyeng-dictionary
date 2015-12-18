@@ -2,17 +2,16 @@
 
 namespace app\controllers;
 
-use app\models\LoginForm;
 use app\models\StartTestForm;
 use app\models\TestSuite;
 use Yii;
 use yii\base\UserException;
-use yii\helpers\VarDumper;
 use yii\web\Controller;
 use yii\web\ErrorAction;
 
 class SiteController extends Controller
 {
+    const APP_PARAMS__DICTIONARY = 'dictionary';
 
     public function actions()
     {
@@ -23,6 +22,9 @@ class SiteController extends Controller
         ];
     }
 
+    /**
+     * @return string|\yii\web\Response
+     */
     public function actionIndex()
     {
         if ($this->getSession()->get(self::SESSION__HAS_TEST_SUITE, false)) {
@@ -33,8 +35,10 @@ class SiteController extends Controller
         return $this->render('index');
     }
 
-    const APP_PARAMS__DICTIONARY = 'dictionary';
 
+    /**
+     * @return string|\yii\web\Response
+     */
     public function actionStartTest()
     {
         $model = new StartTestForm();
@@ -55,21 +59,17 @@ class SiteController extends Controller
                 'model' => $model,
             ]
         );
-
-
     }
 
+    /**
+     * @return string|\yii\web\Response
+     * @throws UserException
+     */
     public function actionProcessTest()
     {
-        $testSuite = unserialize($this->getSession()->get(self::SESSION__TEST_SUITE, null));
-
-        if (!($testSuite instanceof TestSuite)) {
-            throw new UserException('Something go wrong');
-        }
+        $testSuite = $this->getTestSuite();
 
         if ($this->getRequest()->post()) {
-
-            VarDumper::dump($testSuite->getCurrentCase());
 
             $answer = $this->getRequest()->post('answer');
             if ($testSuite->getCurrentCase()->validate($answer)) {
@@ -104,6 +104,9 @@ class SiteController extends Controller
         return $this->redirect(['test-results']);
     }
 
+    /**
+     * @return \yii\web\Response
+     */
     public function actionCancelTest()
     {
         if ($this->getRequest()->post()) {
@@ -119,13 +122,13 @@ class SiteController extends Controller
         return $this->redirect(['index']);
     }
 
+    /**
+     * @return string
+     * @throws UserException
+     */
     public function actionTestResults()
     {
-        $testSuite = unserialize($this->getSession()->get(self::SESSION__TEST_SUITE, null));
-
-        if (!($testSuite instanceof TestSuite)) {
-            throw  new UserException('Something go wrong');
-        }
+        $testSuite = $this->getTestSuite();
 
         return $this->render('test-results',
             [
@@ -143,7 +146,7 @@ class SiteController extends Controller
     /**
      * @return \yii\web\Session
      */
-    public function getSession()
+    private function getSession()
     {
 
         return \Yii::$app->getSession();
@@ -152,34 +155,25 @@ class SiteController extends Controller
     /**
      * @return \yii\web\Request
      */
-    public function getRequest()
+    private function getRequest()
     {
 
         return \Yii::$app->getRequest();
     }
 
-    public function actionLogin()
+
+    /**
+     * @return mixed
+     * @throws UserException
+     */
+    private function getTestSuite()
     {
-        if (!\Yii::$app->user->isGuest) {
-            return $this->goHome();
+        $testSuite = unserialize($this->getSession()->get(self::SESSION__TEST_SUITE, null));
+
+        if (!($testSuite instanceof TestSuite)) {
+            throw new UserException('Can\'t restore test suite');
         }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-
-        return $this->render('login',
-            [
-                'model' => $model,
-            ]
-        );
-    }
-
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
+        return $testSuite;
     }
 }
